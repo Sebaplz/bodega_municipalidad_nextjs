@@ -1,21 +1,6 @@
 "use client";
-
-import { useState } from "react";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import * as z from "zod";
-import { useRouter } from "next/navigation";
-import Link from "next/link";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
 import {
   Card,
   CardContent,
@@ -24,15 +9,24 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Warehouse } from "lucide-react";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import { useRegisterMutation } from "@/hooks/useRegisterMutation";
 import { registerSchema } from "@/utils/validation";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { Warehouse } from "lucide-react";
+import Link from "next/link";
+import { useForm } from "react-hook-form";
+import * as z from "zod";
 
-export default function RegisterPage() {
-  const router = useRouter();
-  const [error, setError] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
-
+const RegisterPage = () => {
   const form = useForm<z.infer<typeof registerSchema>>({
     resolver: zodResolver(registerSchema),
     defaultValues: {
@@ -42,22 +36,11 @@ export default function RegisterPage() {
     },
   });
 
-  async function onSubmit(values: z.infer<typeof registerSchema>) {
-    setIsLoading(true);
-    setError(null);
-    try {
-      // Aquí iría la lógica para registrar al usuario
-      // Por ahora, simularemos un registro exitoso
-      console.log(values);
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-      router.push("/");
-    } catch (error) {
-      setError("Ocurrió un error al registrar el usuario");
-      console.log(error);
-    } finally {
-      setIsLoading(false);
-    }
-  }
+  const registerMutation = useRegisterMutation();
+
+  const onSubmit = (values: z.infer<typeof registerSchema>) => {
+    registerMutation.mutate(values);
+  };
 
   return (
     <div className="flex items-center justify-center min-h-screen bg-gray-100">
@@ -126,17 +109,23 @@ export default function RegisterPage() {
                   </FormItem>
                 )}
               />
-              <Button className="w-full" type="submit" disabled={isLoading}>
-                {isLoading ? "Registrando..." : "Registrarse"}
+              <Button
+                className="w-full"
+                type="submit"
+                disabled={registerMutation.isPending}
+              >
+                {registerMutation.isPending ? "Registrando..." : "Registrarse"}
               </Button>
             </form>
           </Form>
         </CardContent>
-        {error && (
+        {registerMutation.isError && (
           <CardFooter>
             <Alert variant="destructive">
               <AlertTitle>Error</AlertTitle>
-              <AlertDescription>{error}</AlertDescription>
+              <AlertDescription>
+                {JSON.stringify(registerMutation.error)}
+              </AlertDescription>
             </Alert>
           </CardFooter>
         )}
@@ -151,4 +140,6 @@ export default function RegisterPage() {
       </Card>
     </div>
   );
-}
+};
+
+export default RegisterPage;
